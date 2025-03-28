@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   
   
-  <title>第一天 | faes</title>
+  <title>MySQL容器之一 | faes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="吾生也有涯，而知也无涯。以有涯随无涯，殆已！">
+  <meta name="description" content="mysql的docker使用情景的一些事项首先拉取官方镜像   1docker pull mysql  然后创建容器并运行   1docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD&#x3D;123456 mysql  参数解析：    参数 作用    docker run 创建并启动一个新容器   -i (–inte">
 <meta property="og:type" content="article">
-<meta property="og:title" content="第一天">
-<meta property="og:url" content="https://faes.github.io/2025/03/27/%E7%AC%AC%E4%B8%80%E5%A4%A9/index.html">
+<meta property="og:title" content="MySQL容器之一">
+<meta property="og:url" content="https://faes.github.io/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/index.html">
 <meta property="og:site_name" content="faes">
-<meta property="og:description" content="吾生也有涯，而知也无涯。以有涯随无涯，殆已！">
+<meta property="og:description" content="mysql的docker使用情景的一些事项首先拉取官方镜像   1docker pull mysql  然后创建容器并运行   1docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD&#x3D;123456 mysql  参数解析：    参数 作用    docker run 创建并启动一个新容器   -i (–inte">
 <meta property="og:locale">
-<meta property="article:published_time" content="2025-03-27T13:28:33.000Z">
-<meta property="article:modified_time" content="2025-03-27T15:51:06.175Z">
+<meta property="article:published_time" content="2025-03-28T07:46:28.000Z">
+<meta property="article:modified_time" content="2025-03-28T07:58:43.318Z">
 <meta property="article:author" content="faes">
-<meta property="article:tag" content="随笔">
+<meta property="article:tag" content="mysql,docker">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternate" href="/atom.xml" title="faes" type="application/atom+xml">
@@ -74,10 +74,10 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-第一天" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+        <section id="main"><article id="post-MySQL容器之一" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2025/03/27/%E7%AC%AC%E4%B8%80%E5%A4%A9/" class="article-date">
-  <time class="dt-published" datetime="2025-03-27T13:28:33.000Z" itemprop="datePublished">2025-03-27</time>
+    <a href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" class="article-date">
+  <time class="dt-published" datetime="2025-03-28T07:46:28.000Z" itemprop="datePublished">2025-03-28</time>
 </a>
     
   </div>
@@ -88,7 +88,7 @@
         
   
     <h1 class="p-name article-title" itemprop="headline name">
-      第一天
+      MySQL容器之一
     </h1>
   
 
@@ -96,15 +96,62 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h1 id="吾生也有涯，而知也无涯。以有涯随无涯，殆已！"><a href="#吾生也有涯，而知也无涯。以有涯随无涯，殆已！" class="headerlink" title="吾生也有涯，而知也无涯。以有涯随无涯，殆已！"></a>吾生也有涯，而知也无涯。以有涯随无涯，殆已！</h1>
+        <h1 id="mysql的docker使用情景的一些事项"><a href="#mysql的docker使用情景的一些事项" class="headerlink" title="mysql的docker使用情景的一些事项"></a>mysql的docker使用情景的一些事项</h1><p>首先拉取官方镜像  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull mysql</span><br></pre></td></tr></table></figure>
+
+<p>然后创建容器并运行  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql</span><br></pre></td></tr></table></figure>
+
+<p>参数解析：</p>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>docker run</code></td>
+<td align="center">创建并启动一个新容器</td>
+</tr>
+<tr>
+<td align="center"><code>-i</code> (–interactive)</td>
+<td align="center">保持标准输入（STDIN）打开，允许与容器交互（通常与<code>-t</code>联用</td>
+</tr>
+<tr>
+<td align="center"><code>-t</code> (–tty)</td>
+<td align="center">分配一个伪终端（TTY），使容器像本地终端一样工作</td>
+</tr>
+<tr>
+<td align="center"><code>-d</code> (–detach)</td>
+<td align="center">后台运行容器（守护模式），返回容器ID</td>
+</tr>
+<tr>
+<td align="center"><code>--name mysql-test</code></td>
+<td align="center">为容器指定名称，替代自动生成的ID</td>
+</tr>
+<tr>
+<td align="center"><code>-p 3306:3306</code></td>
+<td align="center">端口映射，将宿主机的3306映射到容器的3306（MySQL默认端口）</td>
+</tr>
+<tr>
+<td align="center"><code>-e MYSQL_ROOT_PASSWORD=123456</code></td>
+<td align="center">设置环境变量，这里是root用户密码（必须设置，否则容器启动失败）</td>
+</tr>
+<tr>
+<td align="center"><code>mysql</code></td>
+<td align="center">使用的镜像名称</td>
+</tr>
+</tbody></table>
+
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/27/%E7%AC%AC%E4%B8%80%E5%A4%A9/" data-id="cm8rkwku40001dcqg378535bd" data-title="第一天" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
+      <a data-url="https://faes.github.io/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" data-id="cm8shqwy50000noqgba542pic" data-title="MySQL容器之一" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql-docker/" rel="tag">mysql,docker</a></li></ul>
 
     </footer>
   </div>
@@ -112,15 +159,11 @@
     
 <nav id="article-nav">
   
-    <a href="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Neuer</strong>
-      <div class="article-nav-title">
-        
-          怎么查看linux命令历史
-        
-      </div>
-    </a>
   
+    <a href="/2025/03/28/%E6%97%A0%E9%A2%98%E4%B9%8B%E4%B8%80/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">无题之一</div>
+    </a>
   
 </nav>
 

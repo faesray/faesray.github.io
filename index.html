@@ -71,6 +71,93 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-MySQL容器之一" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" class="article-date">
+  <time class="dt-published" datetime="2025-03-28T07:46:28.000Z" itemprop="datePublished">2025-03-28</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/">MySQL容器之一</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="mysql的docker使用情景的一些事项"><a href="#mysql的docker使用情景的一些事项" class="headerlink" title="mysql的docker使用情景的一些事项"></a>mysql的docker使用情景的一些事项</h1><p>首先拉取官方镜像  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull mysql</span><br></pre></td></tr></table></figure>
+
+<p>然后创建容器并运行  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql</span><br></pre></td></tr></table></figure>
+
+<p>参数解析：</p>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>docker run</code></td>
+<td align="center">创建并启动一个新容器</td>
+</tr>
+<tr>
+<td align="center"><code>-i</code> (–interactive)</td>
+<td align="center">保持标准输入（STDIN）打开，允许与容器交互（通常与<code>-t</code>联用</td>
+</tr>
+<tr>
+<td align="center"><code>-t</code> (–tty)</td>
+<td align="center">分配一个伪终端（TTY），使容器像本地终端一样工作</td>
+</tr>
+<tr>
+<td align="center"><code>-d</code> (–detach)</td>
+<td align="center">后台运行容器（守护模式），返回容器ID</td>
+</tr>
+<tr>
+<td align="center"><code>--name mysql-test</code></td>
+<td align="center">为容器指定名称，替代自动生成的ID</td>
+</tr>
+<tr>
+<td align="center"><code>-p 3306:3306</code></td>
+<td align="center">端口映射，将宿主机的3306映射到容器的3306（MySQL默认端口）</td>
+</tr>
+<tr>
+<td align="center"><code>-e MYSQL_ROOT_PASSWORD=123456</code></td>
+<td align="center">设置环境变量，这里是root用户密码（必须设置，否则容器启动失败）</td>
+</tr>
+<tr>
+<td align="center"><code>mysql</code></td>
+<td align="center">使用的镜像名称</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://faes.github.io/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" data-id="cm8shqwy50000noqgba542pic" data-title="MySQL容器之一" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql-docker/" rel="tag">mysql,docker</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-无题之一" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2025/03/28/%E6%97%A0%E9%A2%98%E4%B9%8B%E4%B8%80/" class="article-date">
@@ -231,7 +318,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql-docker/" rel="tag">mysql,docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
     </div>
   </div>
 
@@ -241,7 +328,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/linux/" style="font-size: 10px;">linux</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 20px;">随笔</a>
+      <a href="/tags/linux/" style="font-size: 10px;">linux</a> <a href="/tags/mysql-docker/" style="font-size: 10px;">mysql,docker</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 20px;">随笔</a>
     </div>
   </div>
 
@@ -261,6 +348,10 @@
     <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/">MySQL容器之一</a>
+          </li>
         
           <li>
             <a href="/2025/03/28/%E6%97%A0%E9%A2%98%E4%B9%8B%E4%B8%80/">无题之一</a>
