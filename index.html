@@ -94,9 +94,24 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <ul>
+<li><p>首先还是贴一个mysql的status看看吧：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng"></p>
+</li>
 <li><p>mysql服务器处理请求的过程（以一种简单的方式）可以划分为server层和存储引擎层。连接管理、查询缓存（8.0以后移除）、语法解析、查询优化这些不涉及真实数据存取的过程交给server层，存取真实数据的功能交给存储引擎。<br>各种不同的存储引擎为server层提供统一的调用接口，大概有几十个底层函数，其中包含“读取索引下一条记录”、“插入数据”等。<br>server层和存储引擎交互一般以记录为单位，也就是说引擎拿到一条数据后返回给server，server来判断where条件是否满足。<br>server层其实在判断记录符合要求后先放在一个缓冲区，缓冲区满了之后再发送给客户端。</p>
 </li>
 <li><p>使用<code>show create table mytable;</code>命令即可查看该表的创建信息（并非用户创建时敲入的命令。mysql自己变成了标准定义）：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng"><br>如果改写为<code>show create table mytable\G</code>，则会改用垂直表形式输出，即每一行是一个字段。\G表示改用垂直表输出，并且隐含语句结束，不用再加分号：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng"></p>
+</li>
+<li><p>类UNIX系统中，mysql启动时会首先应用<code>/etc/my.cnf</code>中的配置（其实还有很多其他会扫描的可用配置文件路径，并且相同的配置属性会以最后一个配置该属性的文件为准，并且命令行指定的配置属性会覆盖所有配置文件中的对应属性）。如果不想让mysql从这些路径搜索并加载，可以用<code>mysqld --defaults-file=/tmp/myconfig.txt</code>。但如果文件不存在或无法访问就会报错。另外，使用<code>--defaults-extra-file</code>可以在默认路径之外指定一个自定义路径，默认路径和自定义路径都会被搜索。配置文件的一个代码示例：  </p>
+<pre><code>[server]
+default-storage-engine=myisam
+</code></pre>
+<p>其实还有其他几个更细的组别划分，但是<code>server</code>和<code>client</code>能够对所有服务器和客户端启动方式生效。</p>
+</li>
+<li><p>mysql其实分为服务器进程和客户端进程，使用者在客户端输入命令，通过某种通信方式通知服务器，服务器运行后返回结果。具体的通信方式有：  </p>
+<ol>
+<li><em><strong>TCP&#x2F;IP</strong></em>。通过<code>-h</code>、<code>-P</code>可以设置地址和端口。</li>
+<li><em><strong>命名管道和共享内存</strong></em>（windows）。</li>
+<li><em><strong>UNIX域套接字</strong></em>。如果服务器进程和客户端进程运行在同一台类UNIX系统主机上，如果客户端启动时没有指定主机名，或者指定主机名为<code>localhost</code>，或者增加<code>--protocal=socket</code>参数，就可以通过套接字通信。mysql服务器进程默认监听<code>/tmp/mysql.sock</code>文件。我在mysql官方镜像中打开<code>/etc/my.cnf</code>，看到其中的<code>[client]</code>配置下配置了客户端监听的文件。</li>
+</ol>
 </li>
 </ul>
 
