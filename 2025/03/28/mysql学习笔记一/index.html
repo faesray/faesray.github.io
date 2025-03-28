@@ -4,20 +4,22 @@
   <meta charset="utf-8">
   
   
-  <title>MySQL容器之一 | faes</title>
+  <title>mysql学习笔记一 | faes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="mysql的docker使用情景的一些事项首先拉取官方镜像   1docker pull mysql  然后创建容器并运行   1docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD&#x3D;123456 mysql  参数解析：    参数 作用    docker run 创建并启动一个新容器   -i (–inte">
+  <meta name="description" content="mysql服务器处理请求的过程（以一种简单的方式）可以划分为server层和存储引擎层。连接管理、查询缓存（8.0以后移除）、语法解析、查询优化这些不涉及真实数据存取的过程交给server层，存取真实数据的功能交给存储引擎。各种不同的存储引擎为server层提供统一的调用接口，大概有几十个底层函数，其中包含“读取索引下一条记录”、“插入数据”等。server层和存储引擎交互一般以记录为单位，也就">
 <meta property="og:type" content="article">
-<meta property="og:title" content="MySQL容器之一">
-<meta property="og:url" content="https://faes.github.io/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/index.html">
+<meta property="og:title" content="mysql学习笔记一">
+<meta property="og:url" content="https://faes.github.io/2025/03/28/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%80/index.html">
 <meta property="og:site_name" content="faes">
-<meta property="og:description" content="mysql的docker使用情景的一些事项首先拉取官方镜像   1docker pull mysql  然后创建容器并运行   1docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD&#x3D;123456 mysql  参数解析：    参数 作用    docker run 创建并启动一个新容器   -i (–inte">
+<meta property="og:description" content="mysql服务器处理请求的过程（以一种简单的方式）可以划分为server层和存储引擎层。连接管理、查询缓存（8.0以后移除）、语法解析、查询优化这些不涉及真实数据存取的过程交给server层，存取真实数据的功能交给存储引擎。各种不同的存储引擎为server层提供统一的调用接口，大概有几十个底层函数，其中包含“读取索引下一条记录”、“插入数据”等。server层和存储引擎交互一般以记录为单位，也就">
 <meta property="og:locale">
-<meta property="article:published_time" content="2025-03-28T07:46:28.000Z">
-<meta property="article:modified_time" content="2025-03-28T07:58:43.318Z">
+<meta property="og:image" content="https://faes.github.io/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng">
+<meta property="og:image" content="https://faes.github.io/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng">
+<meta property="article:published_time" content="2025-03-28T10:32:22.000Z">
+<meta property="article:modified_time" content="2025-03-28T10:52:44.278Z">
 <meta property="article:author" content="faes">
-<meta property="article:tag" content="mysql,docker">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://faes.github.io/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng">
   
     <link rel="alternate" href="/atom.xml" title="faes" type="application/atom+xml">
   
@@ -74,10 +76,10 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-MySQL容器之一" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+        <section id="main"><article id="post-mysql学习笔记一" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" class="article-date">
-  <time class="dt-published" datetime="2025-03-28T07:46:28.000Z" itemprop="datePublished">2025-03-28</time>
+    <a href="/2025/03/28/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%80/" class="article-date">
+  <time class="dt-published" datetime="2025-03-28T10:32:22.000Z" itemprop="datePublished">2025-03-28</time>
 </a>
     
   </div>
@@ -88,7 +90,7 @@
         
   
     <h1 class="p-name article-title" itemprop="headline name">
-      MySQL容器之一
+      mysql学习笔记一
     </h1>
   
 
@@ -96,82 +98,30 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h1 id="mysql的docker使用情景的一些事项"><a href="#mysql的docker使用情景的一些事项" class="headerlink" title="mysql的docker使用情景的一些事项"></a>mysql的docker使用情景的一些事项</h1><p>首先拉取官方镜像  </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull mysql</span><br></pre></td></tr></table></figure>
-
-<p>然后创建容器并运行  </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql</span><br></pre></td></tr></table></figure>
-
-<p>参数解析：</p>
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center"><code>docker run</code></td>
-<td align="center">创建并启动一个新容器</td>
-</tr>
-<tr>
-<td align="center"><code>-i</code> (–interactive)</td>
-<td align="center">保持标准输入（STDIN）打开，允许与容器交互（通常与<code>-t</code>联用</td>
-</tr>
-<tr>
-<td align="center"><code>-t</code> (–tty)</td>
-<td align="center">分配一个伪终端（TTY），使容器像本地终端一样工作</td>
-</tr>
-<tr>
-<td align="center"><code>-d</code> (–detach)</td>
-<td align="center">后台运行容器（守护模式），返回容器ID</td>
-</tr>
-<tr>
-<td align="center"><code>--name mysql-test</code></td>
-<td align="center">为容器指定名称，替代自动生成的ID</td>
-</tr>
-<tr>
-<td align="center"><code>-p 3306:3306</code></td>
-<td align="center">端口映射，将宿主机的3306映射到容器的3306（MySQL默认端口）</td>
-</tr>
-<tr>
-<td align="center"><code>-e MYSQL_ROOT_PASSWORD=123456</code></td>
-<td align="center">设置环境变量，这里是root用户密码（必须设置，否则容器启动失败）</td>
-</tr>
-<tr>
-<td align="center"><code>mysql</code></td>
-<td align="center">使用的镜像名称</td>
-</tr>
-</tbody></table>
+        <ul>
+<li><p>mysql服务器处理请求的过程（以一种简单的方式）可以划分为server层和存储引擎层。连接管理、查询缓存（8.0以后移除）、语法解析、查询优化这些不涉及真实数据存取的过程交给server层，存取真实数据的功能交给存储引擎。<br>各种不同的存储引擎为server层提供统一的调用接口，大概有几十个底层函数，其中包含“读取索引下一条记录”、“插入数据”等。<br>server层和存储引擎交互一般以记录为单位，也就是说引擎拿到一条数据后返回给server，server来判断where条件是否满足。<br>server层其实在判断记录符合要求后先放在一个缓冲区，缓冲区满了之后再发送给客户端。</p>
+</li>
+<li><p>使用<code>show create table mytable;</code>命令即可查看该表的创建信息（并非用户创建时敲入的命令。mysql自己变成了标准定义）：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng"><br>如果改写为<code>show create table mytable\G</code>，则会改用垂直表形式输出，即每一行是一个字段。\G表示改用垂直表输出，并且隐含语句结束，不用再加分号：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/ng"></p>
+</li>
+</ul>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" data-id="cm8shqwy50000noqgba542pic" data-title="MySQL容器之一" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
+      <a data-url="https://faes.github.io/2025/03/28/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%80/" data-id="cm8snyo1x00003cqg8ne275v3" data-title="mysql学习笔记一" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql-docker/" rel="tag">mysql,docker</a></li></ul>
-
     </footer>
   </div>
   
     
 <nav id="article-nav">
   
-    <a href="/2025/03/28/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%80/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Neuer</strong>
-      <div class="article-nav-title">
-        
-          mysql学习笔记一
-        
-      </div>
-    </a>
   
-  
-    <a href="/2025/03/28/%E6%97%A0%E9%A2%98%E4%B9%8B%E4%B8%80/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Älter</strong>
-      <div class="article-nav-title">无题之一</div>
+      <div class="article-nav-title">MySQL容器之一</div>
     </a>
   
 </nav>
