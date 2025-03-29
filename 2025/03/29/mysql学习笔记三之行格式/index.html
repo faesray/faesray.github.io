@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>mysql学习笔记三之行格式 | faes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="mysql以页为单位在磁盘和内存之间交换数据。innodb中页大小一般为16KB，即16384字节（是不是很熟悉，某r姓数据库）。可以在第一次初始化mysql数据目录mysqld --initialize时指定，在数据库运行过程中无法更改。mysql规定了一个数据页最少存放两条记录。  innodb有compact、redundant、dynamic、compressed四种行格式，可以在创建或">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql学习笔记三之行格式">
+<meta property="og:url" content="https://faes.github.io/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/index.html">
+<meta property="og:site_name" content="faes">
+<meta property="og:description" content="mysql以页为单位在磁盘和内存之间交换数据。innodb中页大小一般为16KB，即16384字节（是不是很熟悉，某r姓数据库）。可以在第一次初始化mysql数据目录mysqld --initialize时指定，在数据库运行过程中无法更改。mysql规定了一个数据页最少存放两条记录。  innodb有compact、redundant、dynamic、compressed四种行格式，可以在创建或">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-03-29T11:38:42.000Z">
+<meta property="article:modified_time" content="2025-03-29T12:20:00.497Z">
+<meta property="article:author" content="faes">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="learning">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="faes" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">faes</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Suche"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Suche"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://faes.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-mysql学习笔记三之行格式" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/" class="article-date">
+  <time class="dt-published" datetime="2025-03-29T11:38:42.000Z" itemprop="datePublished">2025-03-29</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      mysql学习笔记三之行格式
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <ul>
+<li><p>mysql以页为单位在磁盘和内存之间交换数据。innodb中页大小一般为16KB，即16384字节（是不是很熟悉，某r姓数据库）。可以在第一次初始化mysql数据目录<code>mysqld --initialize</code>时指定，在数据库运行过程中无法更改。mysql规定了一个数据页最少存放两条记录。</p>
+</li>
+<li><p>innodb有compact、redundant、dynamic、compressed四种行格式，可以在创建或修改表时指定：</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">create table t row_format=dynamic;</span><br></pre></td></tr></table></figure>
+
+<p>mysql的innodb默认好像是dynamic</p>
+<ul>
+<li><strong>compact：</strong></li>
+</ul>
+<p>一个compact行的组成为：| 变长字段长度列表 | NULL值列表 | 记录头信息 | 列1的值 … 列n的值 |</p>
+<p>其中前三个是一条记录的额外信息，由数据库自己维护，最后一个才是记录的真实数据。</p>
+<p>对于变长字段长度列表，有：<br>1）变长字段长度列表按<strong>倒序</strong>存放了每个<strong>变长非空</strong>列值的实际长度。如果某列非变长字段，但其编码方式导致字段值可能实际长度不定（例如utf8），则同样需要在该列表中存放其真实长度。<br>2）innodb在读取该列表时<em><strong>先查看表结构</strong></em>，以varchar（10）为例，最大长度为每个字符的最大可能长度*10。若该值小于等于255，可以认为该字段只需要一个字节来保存其长度。否则，若实际长度小于等于127，用单字节；若实际长度大于127，用两字节。以字节的第一位来判断当前长度信息用的是单字节还是两字节。</p>
+<p>对于NULL值列表：<br>1）innodb规定该区域必须用整数个字节表示，即使不足1字节。<br>2）该区域的表示方法类似<strong>位图</strong>，同样是倒序。每个允许存储NULL值的列对应一位。不足1字节的话高位补0。</p>
+<p>对于记录头信息：<br>1）记录头信息长度为5字节，详细如下：</p>
+<table>
+<thead>
+<tr>
+<th align="center">名称</th>
+<th align="center">大小（位）</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">预留位1</td>
+<td align="center">1</td>
+<td align="center">没有使用</td>
+</tr>
+<tr>
+<td align="center">预留位2</td>
+<td align="center">1</td>
+<td align="center">没有使用</td>
+</tr>
+<tr>
+<td align="center">deleted_flag</td>
+<td align="center">1</td>
+<td align="center">标记该记录是否删除</td>
+</tr>
+<tr>
+<td align="center">min_rec_flag</td>
+<td align="center">1</td>
+<td align="center">B+树的每层非叶子节点中最小的目录项会添加该标记</td>
+</tr>
+<tr>
+<td align="center">n_owned</td>
+<td align="center">4</td>
+<td align="center">一个页面中的记录会分为若干组，每个组的“老大”的该字段为该组记录数，其余记录的该字段为0</td>
+</tr>
+<tr>
+<td align="center">heap_no</td>
+<td align="center">13</td>
+<td align="center">表示当前记录在页面堆中的相对位置</td>
+</tr>
+<tr>
+<td align="center">record_type</td>
+<td align="center">3</td>
+<td align="center">0表示普通记录，1表示B+树非叶子节点的目录项记录，2表示infimum记录，3表示supermum记录</td>
+</tr>
+<tr>
+<td align="center">next_record</td>
+<td align="center">16</td>
+<td align="center">表示下一条记录的相对位置</td>
+</tr>
+</tbody></table>
+<p>需要注意的是，mysql会在每个记录的列值列表前增加一些附加信息：</p>
+<table>
+<thead>
+<tr>
+<th align="center">列名</th>
+<th align="center">是否必需</th>
+<th align="center">占用空间</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">DB_ROW_ID</td>
+<td align="center">否</td>
+<td align="center">6</td>
+<td align="center">行ID，唯一标识一条记录</td>
+</tr>
+<tr>
+<td align="center">DB_TRX_ID</td>
+<td align="center">是</td>
+<td align="center">6</td>
+<td align="center">事务ID</td>
+</tr>
+<tr>
+<td align="center">DB_ROLL_PTR</td>
+<td align="center">是</td>
+<td align="center">7</td>
+<td align="center">回滚指针</td>
+</tr>
+</tbody></table>
+<p>这里涉及到innodb表的主键生成策略，这个就不需要多讲了吧？</p>
+<p>在compact行格式中，若一个字段值所占空间太大，会把一部分放在该记录中，超过部分放进所谓的“溢出页”中。</p>
+<p>对于char（10），compact格式要求其最小长度为10字节（对于1到3字节的utf8编码，也是指定为1*10字节，这是为了减小空间开销的情况下允许一些情况可以在不开辟新的记录空间的情况下修改记录）。如果实际存储的有效信息只有两个字节，剩下字节用空格填充。</p>
+<ul>
+<li>dynamic行格式与compact大致相同，但是对于超长字段值不会把其中一部分放在当前记录，而是全部存入溢出页，只在当前记录留下一个20字节的指针。compressed行格式会采用压缩算法对页面进行处理。redundant行格式则有很大不同，这里不细说了。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://faes.github.io/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/" data-id="cm8uc0mzk0000ocqg71gv6h1h" data-title="mysql学习笔记三之行格式" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/learning/" rel="tag">learning</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%BA%8C/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">mysql学习笔记二</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/bug/" rel="tag">bug</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/learning/" rel="tag">learning</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/bug/" style="font-size: 10px;">bug</a> <a href="/tags/docker/" style="font-size: 10px;">docker</a> <a href="/tags/hexo/" style="font-size: 10px;">hexo</a> <a href="/tags/learning/" style="font-size: 16.67px;">learning</a> <a href="/tags/linux/" style="font-size: 10px;">linux</a> <a href="/tags/mysql/" style="font-size: 20px;">mysql</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.33px;">随笔</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/03/">March 2025</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/">mysql学习笔记三之行格式</a>
+          </li>
+        
+          <li>
+            <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%BA%8C/">mysql学习笔记二</a>
+          </li>
+        
+          <li>
+            <a href="/2025/03/28/%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9Bhexo%E7%9A%84%E9%97%AE%E9%A2%98/">遇到的一些hexo的问题</a>
+          </li>
+        
+          <li>
+            <a href="/2025/03/28/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%80/">mysql学习笔记一</a>
+          </li>
+        
+          <li>
+            <a href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/">MySQL容器之一</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2025 faes<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

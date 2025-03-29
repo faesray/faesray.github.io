@@ -59,10 +59,10 @@
         
           <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
         
-        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+        <a class="nav-icon nav-search-btn" title="Suche"><span class="fa fa-search"></span></a>
       </nav>
       <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://faes.github.io"></form>
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Suche"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://faes.github.io"></form>
       </div>
     </div>
   </div>
@@ -70,6 +70,284 @@
 
       <div class="outer">
         <section id="main">
+  
+    <article id="post-mysql学习笔记三之行格式" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/" class="article-date">
+  <time class="dt-published" datetime="2025-03-29T11:38:42.000Z" itemprop="datePublished">2025-03-29</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/">mysql学习笔记三之行格式</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <ul>
+<li><p>mysql以页为单位在磁盘和内存之间交换数据。innodb中页大小一般为16KB，即16384字节（是不是很熟悉，某r姓数据库）。可以在第一次初始化mysql数据目录<code>mysqld --initialize</code>时指定，在数据库运行过程中无法更改。mysql规定了一个数据页最少存放两条记录。</p>
+</li>
+<li><p>innodb有compact、redundant、dynamic、compressed四种行格式，可以在创建或修改表时指定：</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">create table t row_format=dynamic;</span><br></pre></td></tr></table></figure>
+
+<p>mysql的innodb默认好像是dynamic</p>
+<ul>
+<li><strong>compact：</strong></li>
+</ul>
+<p>一个compact行的组成为：| 变长字段长度列表 | NULL值列表 | 记录头信息 | 列1的值 … 列n的值 |</p>
+<p>其中前三个是一条记录的额外信息，由数据库自己维护，最后一个才是记录的真实数据。</p>
+<p>对于变长字段长度列表，有：<br>1）变长字段长度列表按<strong>倒序</strong>存放了每个<strong>变长非空</strong>列值的实际长度。如果某列非变长字段，但其编码方式导致字段值可能实际长度不定（例如utf8），则同样需要在该列表中存放其真实长度。<br>2）innodb在读取该列表时<em><strong>先查看表结构</strong></em>，以varchar（10）为例，最大长度为每个字符的最大可能长度*10。若该值小于等于255，可以认为该字段只需要一个字节来保存其长度。否则，若实际长度小于等于127，用单字节；若实际长度大于127，用两字节。以字节的第一位来判断当前长度信息用的是单字节还是两字节。</p>
+<p>对于NULL值列表：<br>1）innodb规定该区域必须用整数个字节表示，即使不足1字节。<br>2）该区域的表示方法类似<strong>位图</strong>，同样是倒序。每个允许存储NULL值的列对应一位。不足1字节的话高位补0。</p>
+<p>对于记录头信息：<br>1）记录头信息长度为5字节，详细如下：</p>
+<table>
+<thead>
+<tr>
+<th align="center">名称</th>
+<th align="center">大小（位）</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">预留位1</td>
+<td align="center">1</td>
+<td align="center">没有使用</td>
+</tr>
+<tr>
+<td align="center">预留位2</td>
+<td align="center">1</td>
+<td align="center">没有使用</td>
+</tr>
+<tr>
+<td align="center">deleted_flag</td>
+<td align="center">1</td>
+<td align="center">标记该记录是否删除</td>
+</tr>
+<tr>
+<td align="center">min_rec_flag</td>
+<td align="center">1</td>
+<td align="center">B+树的每层非叶子节点中最小的目录项会添加该标记</td>
+</tr>
+<tr>
+<td align="center">n_owned</td>
+<td align="center">4</td>
+<td align="center">一个页面中的记录会分为若干组，每个组的“老大”的该字段为该组记录数，其余记录的该字段为0</td>
+</tr>
+<tr>
+<td align="center">heap_no</td>
+<td align="center">13</td>
+<td align="center">表示当前记录在页面堆中的相对位置</td>
+</tr>
+<tr>
+<td align="center">record_type</td>
+<td align="center">3</td>
+<td align="center">0表示普通记录，1表示B+树非叶子节点的目录项记录，2表示infimum记录，3表示supermum记录</td>
+</tr>
+<tr>
+<td align="center">next_record</td>
+<td align="center">16</td>
+<td align="center">表示下一条记录的相对位置</td>
+</tr>
+</tbody></table>
+<p>需要注意的是，mysql会在每个记录的列值列表前增加一些附加信息：</p>
+<table>
+<thead>
+<tr>
+<th align="center">列名</th>
+<th align="center">是否必需</th>
+<th align="center">占用空间</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">DB_ROW_ID</td>
+<td align="center">否</td>
+<td align="center">6</td>
+<td align="center">行ID，唯一标识一条记录</td>
+</tr>
+<tr>
+<td align="center">DB_TRX_ID</td>
+<td align="center">是</td>
+<td align="center">6</td>
+<td align="center">事务ID</td>
+</tr>
+<tr>
+<td align="center">DB_ROLL_PTR</td>
+<td align="center">是</td>
+<td align="center">7</td>
+<td align="center">回滚指针</td>
+</tr>
+</tbody></table>
+<p>这里涉及到innodb表的主键生成策略，这个就不需要多讲了吧？</p>
+<p>在compact行格式中，若一个字段值所占空间太大，会把一部分放在该记录中，超过部分放进所谓的“溢出页”中。</p>
+<p>对于char（10），compact格式要求其最小长度为10字节（对于1到3字节的utf8编码，也是指定为1*10字节，这是为了减小空间开销的情况下允许一些情况可以在不开辟新的记录空间的情况下修改记录）。如果实际存储的有效信息只有两个字节，剩下字节用空格填充。</p>
+<ul>
+<li>dynamic行格式与compact大致相同，但是对于超长字段值不会把其中一部分放在当前记录，而是全部存入溢出页，只在当前记录留下一个20字节的指针。compressed行格式会采用压缩算法对页面进行处理。redundant行格式则有很大不同，这里不细说了。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://faes.github.io/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/" data-id="cm8uc0mzk0000ocqg71gv6h1h" data-title="mysql学习笔记三之行格式" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/learning/" rel="tag">learning</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-mysql学习笔记二" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%BA%8C/" class="article-date">
+  <time class="dt-published" datetime="2025-03-29T05:36:06.000Z" itemprop="datePublished">2025-03-29</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%BA%8C/">mysql学习笔记二</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="嗨嗨嗨我又来了。今天周六，起床就是10点半，早饭-午饭用脱脂牛奶和燕麦解决了。接到一个长春的电话要我加什么游戏群，不知道是不是什么新的骗术"><a href="#嗨嗨嗨我又来了。今天周六，起床就是10点半，早饭-午饭用脱脂牛奶和燕麦解决了。接到一个长春的电话要我加什么游戏群，不知道是不是什么新的骗术" class="headerlink" title="嗨嗨嗨我又来了。今天周六，起床就是10点半，早饭+午饭用脱脂牛奶和燕麦解决了。接到一个长春的电话要我加什么游戏群，不知道是不是什么新的骗术"></a>嗨嗨嗨我又来了。今天周六，起床就是10点半，早饭+午饭用脱脂牛奶和燕麦解决了。接到一个长春的电话要我加什么游戏群，不知道是不是什么新的骗术</h2><ul>
+<li>mysql有四个级别的字符集和比较规则：服务器级别、数据库级别、表级别、列级别：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">级别</th>
+<th align="center">对应系统变量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">服务器</td>
+<td align="center"><code>character_set_server</code><br><code>collation_server</code></td>
+</tr>
+<tr>
+<td align="center">数据库</td>
+<td align="center"><code>character_set_database</code><br><code>collation_database</code></td>
+</tr>
+<tr>
+<td align="center">表</td>
+<td align="center">无，在创建表时指定</td>
+</tr>
+<tr>
+<td align="center">列</td>
+<td align="center">无，在创建表时指定</td>
+</tr>
+</tbody></table>
+<p>需要注意的是，数据库级别的变量只能用来查看，不能通过修改值来改变当前数据库所使用的字符集和排序规则。表级别可以用<code>alter</code>命令修改。<br>若只修改字符集，则会自动应用该字符集的默认比较规则。若只修改比较规则，则会自动应用对应的字符集。</p>
+<p>表和列的字符集和排序规则设置实例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">create table mytable(</span><br><span class="line">    id bigint unsigned not null primary key,</span><br><span class="line">    name varchar(20) not null character set utf8mb4 collate utf8mb4_general_ci</span><br><span class="line">)engine=innodb,character set=utf8mb3,collate=utf8mb3_general_ci;</span><br></pre></td></tr></table></figure>
+<p>***！注意！***mysql9及以后已经不支持对单独的列设置字符集和比较规则，所有列必须共用所在表定义的字符集和比较规则。若在字段后进行相关设置会报错：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/l.png"></p>
+<p>只在表级进行相关设置则成功：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/cess.png"></p>
+<ul>
+<li>常见比较规则后缀含义：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">后缀</th>
+<th align="center">全称</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>_ai</code></td>
+<td align="center">accent insensitive</td>
+<td align="center">不区分重音</td>
+</tr>
+<tr>
+<td align="center"><code>_as</code></td>
+<td align="center">accent sensitive</td>
+<td align="center">区分重音</td>
+</tr>
+<tr>
+<td align="center"><code>_ci</code></td>
+<td align="center">case insensitive</td>
+<td align="center">不区分大小写</td>
+</tr>
+<tr>
+<td align="center"><code>_cs</code></td>
+<td align="center">case sensitive</td>
+<td align="center">区分大小写</td>
+</tr>
+<tr>
+<td align="center"><code>_bin</code></td>
+<td align="center">binary</td>
+<td align="center">以二进制方式比较</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>这一块比较复杂难懂了</strong> 在mysql中还有一些和字符集相关的参数：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">意义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>character_set_client</code></td>
+<td align="center">表示服务器用什么字符集来理解客户端发送过来的以字节为单位的请求数据</td>
+</tr>
+<tr>
+<td align="center"><code>character_set_connection</code></td>
+<td align="center">指定服务器在理解了客户端发过来的请求对应的字符串之后，在实际处理时，用什么字符集来对待它们。若用户操作涉及表字段，以表字段自身字符集为准</td>
+</tr>
+<tr>
+<td align="center"><code>collation_connection</code></td>
+<td align="center">同上</td>
+</tr>
+<tr>
+<td align="center"><code>character_set_result</code></td>
+<td align="center">服务器采用该系统变量指定的字符集对返回给客户端的字符串进行编码</td>
+</tr>
+</tbody></table>
+<p>上面这几个参数对不同的客户端实例来说是不同的，作用范围为session级别。每个客户端在与服务器建立连接后服务器都会为这个连接维护这几个变量。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://faes.github.io/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%BA%8C/" data-id="cm8ttkguw0000l0qg7igv2hfd" data-title="mysql学习笔记二" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/learning/" rel="tag">learning</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
   
     <article id="post-遇到的一些hexo的问题" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
@@ -97,11 +375,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/28/%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9Bhexo%E7%9A%84%E9%97%AE%E9%A2%98/" data-id="cm8swerhc0000skqgg017auju" data-title="遇到的一些hexo的问题" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://faes.github.io/2025/03/28/%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9Bhexo%E7%9A%84%E9%97%AE%E9%A2%98/" data-id="cm8swerhc0000skqgg017auju" data-title="遇到的一些hexo的问题" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/hexo-bug/" rel="tag">hexo,bug</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/bug/" rel="tag">bug</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/hexo/" rel="tag">hexo</a></li></ul>
 
     </footer>
   </div>
@@ -140,22 +418,37 @@
 </li>
 <li><p>使用<code>show create table mytable;</code>命令即可查看该表的创建信息（并非用户创建时敲入的命令。mysql自己变成了标准定义）：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/w.png"><br>如果改写为<code>show create table mytable\G</code>，则会改用垂直表形式输出，即每一行是一个字段。\G表示改用垂直表输出，并且隐含语句结束，不用再加分号：<br><img src="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/wg.png"></p>
 </li>
-<li><p>类UNIX系统中，mysql启动时会首先应用<code>/etc/my.cnf</code>中的配置（其实还有很多其他会扫描的可用配置文件路径，并且相同的配置属性会以最后一个配置该属性的文件为准，并且命令行指定的配置属性会覆盖所有配置文件中的对应属性）。如果不想让mysql从这些路径搜索并加载，可以用<code>mysqld --defaults-file=/tmp/myconfig.txt</code>。但如果文件不存在或无法访问就会报错。另外，使用<code>--defaults-extra-file</code>可以在默认路径之外指定一个自定义路径，默认路径和自定义路径都会被搜索。配置文件的一个代码示例：  </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">  [server]</span><br><span class="line">  default-storage-engine=myisam</span><br><span class="line">  ```  </span><br><span class="line">  其实还有其他几个更细的组别划分，但是`server`和`client`能够对所有服务器和客户端启动方式生效。</span><br><span class="line"></span><br><span class="line">* mysql其实分为服务器进程和客户端进程，使用者在客户端输入命令，通过某种通信方式通知服务器，服务器运行后返回结果。具体的通信方式有：  </span><br><span class="line">  1. ***TCP/IP***。通过`-h`、`-P`可以设置地址和端口。</span><br><span class="line">  2. ***命名管道和共享内存***（windows）。</span><br><span class="line">  3. ***UNIX域套接字***。如果服务器进程和客户端进程运行在同一台类UNIX系统主机上，如果客户端启动时没有指定主机名，或者指定主机名为`localhost`，或者增加`--protocal=socket`参数，就可以通过套接字通信。mysql服务器进程默认监听`/tmp/mysql.sock`文件。我在mysql官方镜像中打开`/etc/my.cnf`，看到其中的`[client]`配置下配置了客户端监听的文件。</span><br><span class="line"></span><br><span class="line">* 通过配置文件配置和启动参数传入的变量就是系统变量。mysql拥有全局变量和会话变量。在一个新的客户端连接到服务器时，会根据当前全局变量生成该客户端的会话变量。大多数系统变量可以在运行时用命令修改：  </span><br></pre></td></tr></table></figure>
-<p>set [global|session] default-storage-engine&#x3D;myisam;<br>show [global|session] variables like “%connect%”;</p>
-<pre><code>
-</code></pre>
+<li><p>类UNIX系统中，mysql启动时会首先应用<code>/etc/my.cnf</code>中的配置（其实还有很多其他会扫描的可用配置文件路径，并且相同的配置属性会以最后一个配置该属性的文件为准，并且命令行指定的配置属性会覆盖所有配置文件中的对应属性）。如果不想让mysql从这些路径搜索并加载，可以用<code>mysqld --defaults-file=/tmp/myconfig.txt</code>。但如果文件不存在或无法访问就会报错。另外，使用<code>--defaults-extra-file</code>可以在默认路径之外指定一个自定义路径，默认路径和自定义路径都会被搜索。配置文件的一个代码示例：</p>
 </li>
 </ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[server]</span><br><span class="line">default-storage-engine=myisam</span><br></pre></td></tr></table></figure>
+<p>其实还有其他几个更细的组别划分，但是<code>server</code>和<code>client</code>能够对所有服务器和客户端启动方式生效。</p>
+<ul>
+<li><p>mysql其实分为服务器进程和客户端进程，使用者在客户端输入命令，通过某种通信方式通知服务器，服务器运行后返回结果。具体的通信方式有：  </p>
+<ol>
+<li><em><strong>TCP&#x2F;IP</strong></em>。通过<code>-h</code>、<code>-P</code>可以设置地址和端口。</li>
+<li><em><strong>命名管道和共享内存</strong></em>（windows）。</li>
+<li><em><strong>UNIX域套接字</strong></em>。如果服务器进程和客户端进程运行在同一台类UNIX系统主机上，如果客户端启动时没有指定主机名，或者指定主机名为<code>localhost</code>，或者增加<code>--protocal=socket</code>参数，就可以通过套接字通信。mysql服务器进程默认监听<code>/tmp/mysql.sock</code>文件。我在mysql官方镜像中打开<code>/etc/my.cnf</code>，看到其中的<code>[client]</code>配置下配置了客户端监听的文件。</li>
+</ol>
+</li>
+<li><p>通过配置文件配置和启动参数传入的变量就是系统变量。mysql拥有全局变量和会话变量。在一个新的客户端连接到服务器时，会根据当前全局变量生成该客户端的会话变量。大多数系统变量可以在运行时用命令修改：</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">set [global|session] default-storage-engine=myisam;</span><br><span class="line">show [global|session] variables like &quot;%connect%&quot;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>mysql中还有一些状态变量，例如：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show [global|session] status like &quot;%thread%&quot;;</span><br></pre></td></tr></table></figure>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/28/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%80/" data-id="cm8snyo1x00003cqg8ne275v3" data-title="mysql学习笔记一" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://faes.github.io/2025/03/28/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%80/" data-id="cm8snyo1x00003cqg8ne275v3" data-title="mysql学习笔记一" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql-learning/" rel="tag">mysql,learning</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/learning/" rel="tag">learning</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
 
     </footer>
   </div>
@@ -238,11 +531,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" data-id="cm8shqwy50000noqgba542pic" data-title="MySQL容器之一" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://faes.github.io/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/" data-id="cm8shqwy50000noqgba542pic" data-title="MySQL容器之一" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql-docker/" rel="tag">mysql,docker</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
 
     </footer>
   </div>
@@ -290,7 +583,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/28/%E6%97%A0%E9%A2%98%E4%B9%8B%E4%B8%80/" data-id="cm8rkwku60003dcqgal8bdosh" data-title="无题之一" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://faes.github.io/2025/03/28/%E6%97%A0%E9%A2%98%E4%B9%8B%E4%B8%80/" data-id="cm8rkwku60003dcqgal8bdosh" data-title="无题之一" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
@@ -345,7 +638,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/" data-id="cm8rkwku00000dcqgez2i3311" data-title="怎么查看linux命令历史" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://faes.github.io/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/" data-id="cm8rkwku00000dcqgez2i3311" data-title="怎么查看linux命令历史" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
@@ -385,7 +678,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://faes.github.io/2025/03/27/%E7%AC%AC%E4%B8%80%E5%A4%A9/" data-id="cm8rkwku40001dcqg378535bd" data-title="第一天" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://faes.github.io/2025/03/27/%E7%AC%AC%E4%B8%80%E5%A4%A9/" data-id="cm8rkwku40001dcqg378535bd" data-title="第一天" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
@@ -412,7 +705,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo-bug/" rel="tag">hexo,bug</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql-docker/" rel="tag">mysql,docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql-learning/" rel="tag">mysql,learning</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/bug/" rel="tag">bug</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/learning/" rel="tag">learning</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
     </div>
   </div>
 
@@ -422,14 +715,14 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/hexo-bug/" style="font-size: 10px;">hexo,bug</a> <a href="/tags/linux/" style="font-size: 10px;">linux</a> <a href="/tags/mysql-docker/" style="font-size: 10px;">mysql,docker</a> <a href="/tags/mysql-learning/" style="font-size: 10px;">mysql,learning</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 20px;">随笔</a>
+      <a href="/tags/bug/" style="font-size: 10px;">bug</a> <a href="/tags/docker/" style="font-size: 10px;">docker</a> <a href="/tags/hexo/" style="font-size: 10px;">hexo</a> <a href="/tags/learning/" style="font-size: 16.67px;">learning</a> <a href="/tags/linux/" style="font-size: 10px;">linux</a> <a href="/tags/mysql/" style="font-size: 20px;">mysql</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.33px;">随笔</a>
     </div>
   </div>
 
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">Archiv</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/03/">March 2025</a></li></ul>
     </div>
@@ -439,9 +732,17 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B8%89%E4%B9%8B%E8%A1%8C%E6%A0%BC%E5%BC%8F/">mysql学习笔记三之行格式</a>
+          </li>
+        
+          <li>
+            <a href="/2025/03/29/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%BA%8C/">mysql学习笔记二</a>
+          </li>
         
           <li>
             <a href="/2025/03/28/%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9Bhexo%E7%9A%84%E9%97%AE%E9%A2%98/">遇到的一些hexo的问题</a>
@@ -453,14 +754,6 @@
         
           <li>
             <a href="/2025/03/28/MySQL%E5%AE%B9%E5%99%A8%E4%B9%8B%E4%B8%80/">MySQL容器之一</a>
-          </li>
-        
-          <li>
-            <a href="/2025/03/28/%E6%97%A0%E9%A2%98%E4%B9%8B%E4%B8%80/">无题之一</a>
-          </li>
-        
-          <li>
-            <a href="/2025/03/27/%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8Blinux%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2/">怎么查看linux命令历史</a>
           </li>
         
       </ul>
